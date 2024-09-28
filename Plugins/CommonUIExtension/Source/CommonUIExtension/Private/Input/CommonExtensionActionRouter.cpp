@@ -7,5 +7,5 @@
 
 TSharedRef<FCommonAnalogCursor> UCommonExtensionActionRouter::MakeAnalogCursor() const
 {
-    return FCommonAnalogCursor::CreateAnalogCursor<UCommonExtensionAnalogCursor>(*this);
+    return FCommonAnalogCursor::CreateAnalogCursor<FCommonExtensionAnalogCursor>(*this);
 }
