@@ -27,3 +27,15 @@ void SCommonExtensionButton::Construct(const FArguments& InArgs)
 		]
 	);
 }
+
+FReply SCommonExtensionButton::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+{
+	// 這裡不阻擋任何按鍵，無論是搖桿、鍵盤點擊都是依靠Focus
+	return SButton::OnKeyDown(MyGeometry, InKeyEvent);
+}
+
+FReply SCommonExtensionButton::OnKeyUp(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+{
+	// 這裡不阻擋任何按鍵，無論是搖桿、鍵盤點擊都是依靠Focus
+	return SButton::OnKeyUp(MyGeometry, InKeyEvent);
+}
