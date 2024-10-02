@@ -26,6 +26,8 @@ void SCommonExtensionButton::Construct(const FArguments& InArgs)
 			InArgs._Content.Widget
 		]
 	);
+
+	bIsHoverEnabledOnFocus = InArgs._IsHoverEnabledOnFocus;
 }
 
 FReply SCommonExtensionButton::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
@@ -38,4 +40,26 @@ FReply SCommonExtensionButton::OnKeyUp(const FGeometry& MyGeometry, const FKeyEv
 {
 	// 這裡不阻擋任何按鍵，無論是搖桿、鍵盤點擊都是依靠Focus
 	return SButton::OnKeyUp(MyGeometry, InKeyEvent);
+}
+
+FReply SCommonExtensionButton::OnFocusReceived(const FGeometry& MyGeometry, const FFocusEvent& InFocusEvent)
+{
+	if (bIsHoverEnabledOnFocus)
+	{
+		// 模擬滑鼠進入達成Hover狀態
+		OnMouseEnter(MyGeometry, FPointerEvent());
+	}
+
+	return SCommonButton::OnFocusReceived(MyGeometry, InFocusEvent);
+}
+
+void SCommonExtensionButton::OnFocusLost(const FFocusEvent& InFocusEvent)
+{
+	if (bIsHoverEnabledOnFocus)
+	{
+		// 模擬滑鼠離開達成Unhover狀態
+		OnMouseLeave(FPointerEvent());
+	}
+
+	SCommonButton::OnFocusLost(InFocusEvent);
 }

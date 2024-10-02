@@ -19,6 +19,7 @@ public:
 		, _PressMethod(EButtonPressMethod::DownAndUp)
 		, _IsFocusable(true)
 		, _IsInteractionEnabled(true)
+		, _IsHoverEnabledOnFocus(false)
 		{}
 		SLATE_DEFAULT_SLOT(FArguments, Content)
 		SLATE_STYLE_ARGUMENT(FButtonStyle, ButtonStyle)
@@ -30,6 +31,7 @@ public:
 		SLATE_ARGUMENT(bool, IsFocusable)
 		SLATE_ARGUMENT(bool, IsButtonEnabled)
 		SLATE_ARGUMENT(bool, IsInteractionEnabled)
+		SLATE_ARGUMENT(bool, IsHoverEnabledOnFocus)
 		SLATE_EVENT(FOnClicked, OnClicked)
 		SLATE_EVENT(FOnClicked, OnDoubleClicked)
 		SLATE_EVENT(FSimpleDelegate, OnPressed)
@@ -44,5 +46,11 @@ public:
 	// ~Begin SWidget Interface
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply OnKeyUp(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
+
+	virtual FReply OnFocusReceived(const FGeometry& MyGeometry, const FFocusEvent& InFocusEvent) override;
+	virtual void OnFocusLost(const FFocusEvent& InFocusEvent) override;
 	// ~End SWidget Interface
+
+protected:
+	bool bIsHoverEnabledOnFocus;
 };

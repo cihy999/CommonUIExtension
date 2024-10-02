@@ -9,7 +9,7 @@
 #include "Slate/SCommonExtensionButton.h"
 #include "CommonExtensionLogs.h"
 
-namespace CommonUIEx::Command
+namespace ExCommand
 {
 	bool bPrintButtonFocusInfo = false;
 	FAutoConsoleVariableRef CVarPrintButtonFocusInfo(
@@ -24,6 +24,18 @@ TSharedPtr<SCommonExtensionButton> UCommonExtensionButtonInternal::GetCachedButt
 	return MyCommonExtensionButton;
 }
 
+bool UCommonExtensionButtonInternal::GetEnableHoverOnFocus() const
+{
+	return bEnableHoverOnFocus;
+}
+
+UCommonExtensionButtonInternal::UCommonExtensionButtonInternal(const FObjectInitializer& Initializer)
+	: Super(Initializer)
+	, bEnableHoverOnFocus(true)
+{
+
+}
+
 TSharedRef<SWidget> UCommonExtensionButtonInternal::RebuildWidget()
 {
 	MyButton = MyCommonButton = MyCommonExtensionButton = SNew(SCommonExtensionButton)
@@ -33,6 +45,7 @@ TSharedRef<SWidget> UCommonExtensionButtonInternal::RebuildWidget()
 		.IsFocusable(GetIsFocusable())
 		.IsButtonEnabled(bButtonEnabled)
 		.IsInteractionEnabled(bInteractionEnabled)
+		.IsHoverEnabledOnFocus(bEnableHoverOnFocus)
 		.OnClicked(BIND_UOBJECT_DELEGATE(FOnClicked, SlateHandleClickedOverride))
 		.OnDoubleClicked(BIND_UOBJECT_DELEGATE(FOnClicked, SlateHandleDoubleClicked))
 		.OnPressed(BIND_UOBJECT_DELEGATE(FSimpleDelegate, SlateHandlePressedOverride))
@@ -54,6 +67,7 @@ TSharedRef<SWidget> UCommonExtensionButtonInternal::RebuildWidget()
 		Cast<UButtonSlot>(GetContentSlot())->BuildSlot(MyCommonExtensionButton.ToSharedRef());
 	}
 
+	// 必須回傳MyBox，否則MinWidth & MinHeight會失效
 	return MyBox.ToSharedRef();
 }
 
@@ -64,11 +78,15 @@ void UCommonExtensionButtonInternal::ReleaseSlateResources(bool bReleaseChildren
 	// MyBox由CommonButtonInternalBase處理
 }
 
+bool UCommonExtensionButton::IsHoverEnabledOnFocus() const
+{
+	return MyExtensionRootButton.IsValid() && MyExtensionRootButton->GetEnableHoverOnFocus();
+}
+
 FReply UCommonExtensionButton::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
-	if (CommonUIEx::Command::bPrintButtonFocusInfo)
+	if (ExCommand::bPrintButtonFocusInfo)
 	{
-		// Print Log
 		UE_LOG(CommonWidgetEx, Log, TEXT("%s::NativeOnFocusReceived"), *GetName());
 	}
 
@@ -83,39 +101,66 @@ FReply UCommonExtensionButton::NativeOnFocusReceived(const FGeometry& InGeometry
 
 void UCommonExtensionButton::NativeOnFocusLost(const FFocusEvent& InFocusEvent)
 {
-	if (CommonUIEx::Command::bPrintButtonFocusInfo)
+	if (ExCommand::bPrintButtonFocusInfo)
 	{
 		// Print Log
 		UE_LOG(CommonWidgetEx, Log, TEXT("%s::NativeOnFocusLost"), *GetName());
 	}
 
+	if (MyExtensionRootButton.IsValid())
+	{
+		// 收到Focus後，轉為SButton才能收到Accept
+
+		// RootButton存在就讓它處理，本身不管
+		return;
+	}
+
 	Super::NativeOnFocusLost(InFocusEvent);
+}
+
+void UCommonExtensionButton::HandleFocusReceived()
+{
+	if (ExCommand::bPrintButtonFocusInfo)
+	{
+		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusReceived"), *GetName());
+	}
+
+	// 重寫 Super::HandleFocusReceived()
+
+	if (bShouldSelectUponReceivingFocus && !GetSelected())
+	{
+		// Select也會處理Hover Event
+		SetIsSelected(true, false);
+	}
+	else if (IsHoverEnabledOnFocus() && IsHovered())
+	{
+		// 模擬滑鼠進入達成Hover狀態
+		NativeOnMouseEnter(GetCachedGeometry(), FPointerEvent());
+	}
+
+	OnFocusReceived().Broadcast();
+	BP_OnFocusReceived();
+}
+
+void UCommonExtensionButton::HandleFocusLost()
+{
+	if (ExCommand::bPrintButtonFocusInfo)
+	{
+		// Print Log
+		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusLost"), *GetName());
+	}
+
+	if (IsHoverEnabledOnFocus() && !IsHovered())
+	{
+		// 模擬滑鼠離開達成Unhover狀態
+		NativeOnMouseLeave(FPointerEvent());
+	}
+
+	Super::HandleFocusLost();
 }
 
 UCommonButtonInternalBase* UCommonExtensionButton::ConstructInternalButton()
 {
 	MyExtensionRootButton = WidgetTree->ConstructWidget<UCommonExtensionButtonInternal>(UCommonExtensionButtonInternal::StaticClass(), FName(TEXT("InternalRootButtonBase")));
 	return MyExtensionRootButton.Get();
-}
-
-void UCommonExtensionButton::HandleFocusReceived()
-{
-	if (CommonUIEx::Command::bPrintButtonFocusInfo)
-	{
-		// Print Log
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusReceived"), *GetName());
-	}
-
-	Super::HandleFocusReceived();
-}
-
-void UCommonExtensionButton::HandleFocusLost()
-{
-	if (CommonUIEx::Command::bPrintButtonFocusInfo)
-	{
-		// Print Log
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusLost"), *GetName());
-	}
-
-	Super::HandleFocusLost();
 }

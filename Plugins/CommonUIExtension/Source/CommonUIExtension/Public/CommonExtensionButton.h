@@ -16,10 +16,19 @@ class COMMONUIEXTENSION_API UCommonExtensionButtonInternal : public UCommonButto
 {
 	GENERATED_BODY()
 
+// Focus ============================================================================================================
 public:
 	TSharedPtr<SCommonExtensionButton> GetCachedButton() const;
+	bool GetEnableHoverOnFocus() const;
+
+protected:
+	UPROPERTY(Transient)
+	bool bEnableHoverOnFocus;
 
 // Overriden ==============================================================================================
+public:
+	UCommonExtensionButtonInternal(const FObjectInitializer& Initializer);
+
 protected:
 	// ~Begin UWidget Interface
 	virtual TSharedRef<SWidget> RebuildWidget() override;
@@ -36,18 +45,26 @@ class COMMONUIEXTENSION_API UCommonExtensionButton : public UCommonButtonBase
 {
 	GENERATED_BODY()
 
-// Overriden ==============================================================================================
+// Focus ============================================================================================================
+protected:
+	UFUNCTION(BlueprintCallable)
+	bool IsHoverEnabledOnFocus() const;
+
 protected:
 	// ~Begin UUserWidget Interface
 	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
 	virtual void NativeOnFocusLost(const FFocusEvent& InFocusEvent) override;
 	// ~End UUserWidget Interface
-
+	
 	// ~Begin UCommonButtonBase Interface
-	virtual UCommonButtonInternalBase* ConstructInternalButton() override;
-
 	virtual void HandleFocusReceived() override;
 	virtual void HandleFocusLost() override;
+	// ~End UCommonButtonBase Interface
+
+// Overriden ==============================================================================================
+protected:
+	// ~Begin UCommonButtonBase Interface
+	virtual UCommonButtonInternalBase* ConstructInternalButton() override;
 	// ~End UCommonButtonBase Interface
 
 private:
