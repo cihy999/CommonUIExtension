@@ -82,7 +82,6 @@ void SCommonExtensionButton::SetIsHoverEnabledOnFocus(bool bInIsHoverEnabledOnFo
 
 	bIsHoverEnabledOnFocus = bInIsHoverEnabledOnFocus;
 
-	const bool bWasHovered = IsHovered();
 	bool bIsHoveredNow = bIsFocused && bInIsHoverEnabledOnFocus;
 
 	if (bIsHoveredNow)
