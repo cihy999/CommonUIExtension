@@ -3,4 +3,6 @@
 // Self
 #include "CommonExtensionLogs.h"
 
-DEFINE_LOG_CATEGORY(CommonWidgetEx);
+DEFINE_LOG_CATEGORY(CommonExWidget);
+
+DEFINE_LOG_CATEGORY(CommonExInput);

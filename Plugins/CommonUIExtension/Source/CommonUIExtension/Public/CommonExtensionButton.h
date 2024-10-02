@@ -10,6 +10,7 @@
 #include "CommonExtensionButton.generated.h"
 
 class SCommonExtensionButton;
+enum class ECommonExInputType : uint8;
 
 UCLASS(Experimental)
 class COMMONUIEXTENSION_API UCommonExtensionButtonInternal : public UCommonButtonInternalBase
@@ -20,6 +21,8 @@ class COMMONUIEXTENSION_API UCommonExtensionButtonInternal : public UCommonButto
 public:
 	TSharedPtr<SCommonExtensionButton> GetCachedButton() const;
 	bool GetEnableHoverOnFocus() const;
+
+	void SetEnableHoverOnFocus(bool bInEnableHoverOnFocus);
 
 protected:
 	UPROPERTY(Transient)
@@ -45,6 +48,18 @@ class COMMONUIEXTENSION_API UCommonExtensionButton : public UCommonButtonBase
 {
 	GENERATED_BODY()
 
+// Input ============================================================================================================
+protected:
+	// ~Begin UCommonButtonBase Interface
+	virtual void BindInputMethodChangedDelegate();
+	virtual void UnbindInputMethodChangedDelegate();
+	// ~End UCommonButtonBase Interface
+
+	virtual void OnExInputTypeChanged(ECommonExInputType NewActiveInputType);
+
+	// 根據InputType決定是否啟用HoverOnFocus
+	void UpdateHoverOnFocus(ECommonExInputType NewActiveInputType, bool bTriggerHoverEvent = true);
+
 // Focus ============================================================================================================
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -64,6 +79,7 @@ protected:
 // Overriden ==============================================================================================
 protected:
 	// ~Begin UCommonButtonBase Interface
+	virtual bool Initialize() override;
 	virtual UCommonButtonInternalBase* ConstructInternalButton() override;
 	// ~End UCommonButtonBase Interface
 

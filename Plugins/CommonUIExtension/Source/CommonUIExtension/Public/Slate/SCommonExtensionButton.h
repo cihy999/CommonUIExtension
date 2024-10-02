@@ -51,6 +51,13 @@ public:
 	virtual void OnFocusLost(const FFocusEvent& InFocusEvent) override;
 	// ~End SWidget Interface
 
+// ==================================================================================================================
+public:
+	void SetIsHoverEnabledOnFocus(bool bInIsHoverEnabledOnFocus);
+
 protected:
+	// 當收到Focus時，是否處理Hover；反之，當失去Focus時，是否處理Unhover
 	bool bIsHoverEnabledOnFocus;
+
+	bool bIsFocused;
 };

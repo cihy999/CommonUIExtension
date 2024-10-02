@@ -5,7 +5,10 @@
 // UE
 #include "Blueprint/WidgetTree.h"
 #include "Components/ButtonSlot.h"
+// CommonUI
+#include "CommonInputSubsystem.h"
 // CommonUIExtension
+#include "Input/CommonExtensionActionRouter.h"
 #include "Slate/SCommonExtensionButton.h"
 #include "CommonExtensionLogs.h"
 
@@ -29,9 +32,24 @@ bool UCommonExtensionButtonInternal::GetEnableHoverOnFocus() const
 	return bEnableHoverOnFocus;
 }
 
+void UCommonExtensionButtonInternal::SetEnableHoverOnFocus(bool bInEnableHoverOnFocus)
+{
+	if (bEnableHoverOnFocus == bInEnableHoverOnFocus)
+	{
+		return;
+	}
+
+	bEnableHoverOnFocus = bInEnableHoverOnFocus;
+
+	if (MyCommonExtensionButton.IsValid())
+	{
+		MyCommonExtensionButton->SetIsHoverEnabledOnFocus(bEnableHoverOnFocus);
+	}
+}
+
 UCommonExtensionButtonInternal::UCommonExtensionButtonInternal(const FObjectInitializer& Initializer)
 	: Super(Initializer)
-	, bEnableHoverOnFocus(true)
+	, bEnableHoverOnFocus(false)
 {
 
 }
@@ -78,6 +96,59 @@ void UCommonExtensionButtonInternal::ReleaseSlateResources(bool bReleaseChildren
 	// MyBox由CommonButtonInternalBase處理
 }
 
+void UCommonExtensionButton::BindInputMethodChangedDelegate()
+{
+	Super::BindInputMethodChangedDelegate();
+
+	if (UCommonExtensionActionRouter* ActionRouter = UCommonExtensionActionRouter::Get(*this))
+	{
+		ActionRouter->OnExInputTypeChangedNative.AddUObject(this, &ThisClass::OnExInputTypeChanged);
+		UpdateHoverOnFocus(ActionRouter->GetActiveInputType());
+	}
+}
+
+void UCommonExtensionButton::UnbindInputMethodChangedDelegate()
+{
+	Super::UnbindInputMethodChangedDelegate();
+
+	if (UCommonExtensionActionRouter* ActionRouter = UCommonExtensionActionRouter::Get(*this))
+	{
+		ActionRouter->OnExInputTypeChangedNative.RemoveAll(this);
+	}
+}
+
+void UCommonExtensionButton::OnExInputTypeChanged(ECommonExInputType NewActiveInputType)
+{
+	UpdateHoverOnFocus(NewActiveInputType);
+}
+
+void UCommonExtensionButton::UpdateHoverOnFocus(ECommonExInputType NewActiveInputType, bool bTriggerHoverEvent)
+{
+	if (!MyExtensionRootButton.IsValid())
+	{
+		return;
+	}
+
+	const bool bWasHovered = IsHovered();
+	bool bEnable = NewActiveInputType == ECommonExInputType::Keyboard || NewActiveInputType == ECommonExInputType::Gamepad;
+
+	MyExtensionRootButton->SetEnableHoverOnFocus(bEnable);
+
+	const bool bIsHoveredNow = IsHovered();
+
+	if (IsInteractionEnabled() && bWasHovered != bIsHoveredNow)
+	{
+		if (bIsHoveredNow)
+		{
+			NativeOnHovered();
+		}
+		else
+		{
+			NativeOnUnhovered();
+		}
+	}
+}
+
 bool UCommonExtensionButton::IsHoverEnabledOnFocus() const
 {
 	return MyExtensionRootButton.IsValid() && MyExtensionRootButton->GetEnableHoverOnFocus();
@@ -87,7 +158,7 @@ FReply UCommonExtensionButton::NativeOnFocusReceived(const FGeometry& InGeometry
 {
 	if (ExCommand::bPrintButtonFocusInfo)
 	{
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::NativeOnFocusReceived"), *GetName());
+		UE_LOG(CommonExWidget, Log, TEXT("%s::NativeOnFocusReceived"), *GetName());
 	}
 
 	if (MyExtensionRootButton.IsValid())
@@ -104,13 +175,11 @@ void UCommonExtensionButton::NativeOnFocusLost(const FFocusEvent& InFocusEvent)
 	if (ExCommand::bPrintButtonFocusInfo)
 	{
 		// Print Log
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::NativeOnFocusLost"), *GetName());
+		UE_LOG(CommonExWidget, Log, TEXT("%s::NativeOnFocusLost"), *GetName());
 	}
 
 	if (MyExtensionRootButton.IsValid())
 	{
-		// 收到Focus後，轉為SButton才能收到Accept
-
 		// RootButton存在就讓它處理，本身不管
 		return;
 	}
@@ -122,7 +191,7 @@ void UCommonExtensionButton::HandleFocusReceived()
 {
 	if (ExCommand::bPrintButtonFocusInfo)
 	{
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusReceived"), *GetName());
+		UE_LOG(CommonExWidget, Log, TEXT("%s::HandleFocusReceived"), *GetName());
 	}
 
 	// 重寫 Super::HandleFocusReceived()
@@ -147,7 +216,7 @@ void UCommonExtensionButton::HandleFocusLost()
 	if (ExCommand::bPrintButtonFocusInfo)
 	{
 		// Print Log
-		UE_LOG(CommonWidgetEx, Log, TEXT("%s::HandleFocusLost"), *GetName());
+		UE_LOG(CommonExWidget, Log, TEXT("%s::HandleFocusLost"), *GetName());
 	}
 
 	if (IsHoverEnabledOnFocus() && !IsHovered())
@@ -157,6 +226,12 @@ void UCommonExtensionButton::HandleFocusLost()
 	}
 
 	Super::HandleFocusLost();
+}
+
+bool UCommonExtensionButton::Initialize()
+{
+	const bool bInitializedThisCall = Super::Initialize();
+	return bInitializedThisCall;
 }
 
 UCommonButtonInternalBase* UCommonExtensionButton::ConstructInternalButton()

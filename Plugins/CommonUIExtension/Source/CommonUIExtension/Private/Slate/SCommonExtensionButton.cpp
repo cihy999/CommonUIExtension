@@ -2,6 +2,10 @@
 
 // Self
 #include "Slate/SCommonExtensionButton.h"
+// CommonUI
+#include "CommonInputSubsystem.h"
+// CommonUIExtension
+#include "CommonExtensionLogs.h"
 
 void SCommonExtensionButton::Construct(const FArguments& InArgs)
 {
@@ -28,6 +32,7 @@ void SCommonExtensionButton::Construct(const FArguments& InArgs)
 	);
 
 	bIsHoverEnabledOnFocus = InArgs._IsHoverEnabledOnFocus;
+	bIsFocused = false;
 }
 
 FReply SCommonExtensionButton::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
@@ -44,6 +49,8 @@ FReply SCommonExtensionButton::OnKeyUp(const FGeometry& MyGeometry, const FKeyEv
 
 FReply SCommonExtensionButton::OnFocusReceived(const FGeometry& MyGeometry, const FFocusEvent& InFocusEvent)
 {
+	bIsFocused = true;
+
 	if (bIsHoverEnabledOnFocus)
 	{
 		// 模擬滑鼠進入達成Hover狀態
@@ -55,6 +62,8 @@ FReply SCommonExtensionButton::OnFocusReceived(const FGeometry& MyGeometry, cons
 
 void SCommonExtensionButton::OnFocusLost(const FFocusEvent& InFocusEvent)
 {
+	bIsFocused = false;
+
 	if (bIsHoverEnabledOnFocus)
 	{
 		// 模擬滑鼠離開達成Unhover狀態
@@ -62,4 +71,26 @@ void SCommonExtensionButton::OnFocusLost(const FFocusEvent& InFocusEvent)
 	}
 
 	SCommonButton::OnFocusLost(InFocusEvent);
+}
+
+void SCommonExtensionButton::SetIsHoverEnabledOnFocus(bool bInIsHoverEnabledOnFocus)
+{
+	if (bIsHoverEnabledOnFocus == bInIsHoverEnabledOnFocus)
+	{
+		return;
+	}
+
+	bIsHoverEnabledOnFocus = bInIsHoverEnabledOnFocus;
+
+	const bool bWasHovered = IsHovered();
+	bool bIsHoveredNow = bIsFocused && bInIsHoverEnabledOnFocus;
+
+	if (bIsHoveredNow)
+	{
+		OnMouseEnter(GetCachedGeometry(), FPointerEvent());
+	}
+	else
+	{
+		OnMouseLeave(FPointerEvent());
+	}
 }

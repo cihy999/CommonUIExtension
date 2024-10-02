@@ -8,11 +8,23 @@
 #include "CommonInputSubsystem.h"
 #include "Input/CommonUIActionRouterBase.h"
 #include "Input/CommonUIInputSettings.h"
+// CommonUIExtension
+#include "Input/CommonExtensionActionRouter.h"
+#include "CommonUIExtensionDefine.h"
 
 FCommonExtensionAnalogCursor::FCommonExtensionAnalogCursor(const UCommonUIActionRouterBase& InActionRouter)
 	: FCommonAnalogCursor(InActionRouter)
 {
-
+	// HACK: 因為要通知ActionRouter，必須記錄可以修改的物件，只能強制轉型
+	const UCommonExtensionActionRouter* ConstRouter = Cast<UCommonExtensionActionRouter>(&InActionRouter);
+	if (ConstRouter)
+	{
+		UCommonExtensionActionRouter* Router = const_cast<UCommonExtensionActionRouter*>(ConstRouter);
+		if (Router)
+		{
+			MyExtensionActionRouter = Router;
+		}
+	}
 }
 
 void FCommonExtensionAnalogCursor::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor)
@@ -104,6 +116,54 @@ void FCommonExtensionAnalogCursor::Tick(const float DeltaTime, FSlateApplication
 	}
 }
 
+bool FCommonExtensionAnalogCursor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	if (FAnalogCursor::IsRelevantInput(InKeyEvent))
+	{
+		RefreshActiveInputType(GetInputType(InKeyEvent));
+	}
+
+	return FCommonAnalogCursor::HandleKeyDownEvent(SlateApp, InKeyEvent);
+}
+
+bool FCommonExtensionAnalogCursor::HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
+{
+	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	{
+		RefreshActiveInputType(GetInputType(InPointerEvent));
+	}
+
+	return FCommonAnalogCursor::HandleMouseMoveEvent(SlateApp, InPointerEvent);
+}
+
+bool FCommonExtensionAnalogCursor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
+{
+	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	{
+		RefreshActiveInputType(GetInputType(InPointerEvent));
+	}
+
+	return FCommonAnalogCursor::HandleMouseButtonDownEvent(SlateApp, InPointerEvent);
+}
+
+bool FCommonExtensionAnalogCursor::HandleMouseButtonDoubleClickEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
+{
+	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	{
+		RefreshActiveInputType(GetInputType(InPointerEvent));
+	}
+
+	return FCommonAnalogCursor::HandleMouseButtonDoubleClickEvent(SlateApp, InPointerEvent);
+}
+
+void FCommonExtensionAnalogCursor::Initialize()
+{
+	FCommonAnalogCursor::Initialize();
+
+	// 初始化輸入類型
+	RefreshActiveInputType(GetInputType(ActiveInputMethod));
+}
+
 bool FCommonExtensionAnalogCursor::ShouldVirtualAcceptSimulateMouseButton(const FKeyEvent& InKeyEvent, EInputEvent InputEvent) const
 {
 	// 關閉合成游標點擊，搖桿仰賴Focus處理
@@ -123,4 +183,83 @@ bool FCommonExtensionAnalogCursor::IsViewportWindowInFocusPath(const UCommonUIAc
 		}
 	}
 	return true;
+}
+
+ECommonExInputType FCommonExtensionAnalogCursor::GetInputType(const ECommonInputType& InInputType) const
+{
+	switch (ActiveInputMethod)
+	{
+	// 先以滑鼠為主
+	case ECommonInputType::MouseAndKeyboard:
+		return ECommonExInputType::Mouse;
+		break;
+	// 以下照舊
+	case ECommonInputType::Gamepad:
+		return ECommonExInputType::Gamepad;
+		break;
+	case ECommonInputType::Touch:
+		return ECommonExInputType::Touch;
+		break;
+	}
+
+	return ECommonExInputType::None;
+}
+
+ECommonExInputType FCommonExtensionAnalogCursor::GetInputType(const FKeyEvent& InKeyEvent) const
+{
+	switch (ActiveInputMethod)
+	{
+	// 區分鍵盤、滑鼠
+	case ECommonInputType::MouseAndKeyboard:
+	{
+		const FKey& Key = InKeyEvent.GetKey();
+		bool bIsKeyboard = !(
+			Key.IsGamepadKey()	||
+			Key.IsTouch()		||
+			Key.IsMouseButton() ||
+			Key.IsAnalog()		||
+			Key.IsGesture()
+			);
+
+		return bIsKeyboard ? ECommonExInputType::Keyboard : ECommonExInputType::None;
+	}
+	break;
+	// 以下照舊
+	case ECommonInputType::Gamepad:
+		return ECommonExInputType::Gamepad;
+		break;
+	case ECommonInputType::Touch:
+		return ECommonExInputType::Touch;
+		break;
+	}
+
+	return ECommonExInputType::None;
+}
+
+ECommonExInputType FCommonExtensionAnalogCursor::GetInputType(const FPointerEvent& InPointerEvent) const
+{
+	switch (ActiveInputMethod)
+	{
+	// 區分鍵盤、滑鼠
+	case ECommonInputType::MouseAndKeyboard:
+		return InPointerEvent.IsTouchEvent() ? ECommonExInputType::Touch : ECommonExInputType::Mouse;
+		break;
+	// 以下照舊
+	case ECommonInputType::Gamepad:
+		return ECommonExInputType::Gamepad;
+		break;
+	case ECommonInputType::Touch:
+		return ECommonExInputType::Touch;
+		break;
+	}
+
+	return ECommonExInputType::None;
+}
+
+void FCommonExtensionAnalogCursor::RefreshActiveInputType(ECommonExInputType InputType)
+{
+	if (MyExtensionActionRouter.IsValid())
+	{
+		MyExtensionActionRouter->SetActiveInputType(InputType);
+	}
 }
