@@ -13,6 +13,24 @@ UCommonExtensionActionRouter* UCommonExtensionActionRouter::Get(const UWidget& C
     return Cast<UCommonExtensionActionRouter>(Super::Get(ContextWidget));
 }
 
+void UCommonExtensionActionRouter::Deinitialize()
+{
+    Super::Deinitialize();
+
+    if (FSlateApplication::IsInitialized())
+    {
+        // 如果是CursorUser的話，把UsePlatformCursorForCursorUser調回來
+        // 避免關閉時，游標不見...
+        FSlateApplication& SlateApplication = FSlateApplication::Get();
+        ULocalPlayer* LocalPlayer = GetLocalPlayerChecked();
+        bool bCursorUser = LocalPlayer && LocalPlayer->GetSlateUser() == SlateApplication.GetCursorUser();
+        if (bCursorUser && ActiveInputType == ECommonExInputType::Keyboard)
+        {
+            SlateApplication.UsePlatformCursorForCursorUser(true);
+        }
+    }
+}
+
 ECommonExInputType UCommonExtensionActionRouter::GetActiveInputType() const
 {
     return ActiveInputType;
@@ -29,6 +47,15 @@ void UCommonExtensionActionRouter::SetActiveInputType(ECommonExInputType NewType
     if (ActiveInputType != NewType)
     {
         ActiveInputType = NewType;
+
+        // 偵測到鍵盤，重新調整一次UsePlatformCursorForCursorUser
+        FSlateApplication& SlateApplication = FSlateApplication::Get();
+        ULocalPlayer* LocalPlayer = GetLocalPlayerChecked();
+        bool bCursorUser = LocalPlayer && LocalPlayer->GetSlateUser() == SlateApplication.GetCursorUser();
+        if (bCursorUser && ActiveInputType == ECommonExInputType::Keyboard)
+        {
+            SlateApplication.UsePlatformCursorForCursorUser(false);
+        }
 
         BroadcastInputTypeChanged();
     }

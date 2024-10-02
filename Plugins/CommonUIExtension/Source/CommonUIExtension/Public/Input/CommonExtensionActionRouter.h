@@ -21,6 +21,10 @@ class COMMONUIEXTENSION_API UCommonExtensionActionRouter : public UCommonUIActio
 public:
 	static UCommonExtensionActionRouter* Get(const UWidget& ContextWidget);
 
+	// ~Begin USubsystem Interface
+	virtual void Deinitialize() override;
+	// ~End USubsystem Interface
+
 // Input ===========================================================================================================
 public:
 	UFUNCTION(BlueprintCallable, Category = "CommonExtensionActionRouter")

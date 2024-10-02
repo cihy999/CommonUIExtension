@@ -6,6 +6,7 @@
 #include "Components/Widget.h"
 // CommonUI
 #include "CommonInputSubsystem.h"
+#include "ICommonInputModule.h"
 #include "Input/CommonUIActionRouterBase.h"
 #include "Input/CommonUIInputSettings.h"
 // CommonUIExtension
@@ -118,9 +119,10 @@ void FCommonExtensionAnalogCursor::Tick(const float DeltaTime, FSlateApplication
 
 bool FCommonExtensionAnalogCursor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
 {
-	if (FAnalogCursor::IsRelevantInput(InKeyEvent))
+	ECommonExInputType InputType = GetInputType(InKeyEvent);
+	if (IsRelevantInputForType(SlateApp, InKeyEvent, InputType))
 	{
-		RefreshActiveInputType(GetInputType(InKeyEvent));
+		RefreshActiveInputType(InputType);
 	}
 
 	return FCommonAnalogCursor::HandleKeyDownEvent(SlateApp, InKeyEvent);
@@ -128,9 +130,10 @@ bool FCommonExtensionAnalogCursor::HandleKeyDownEvent(FSlateApplication& SlateAp
 
 bool FCommonExtensionAnalogCursor::HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
-	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	ECommonExInputType InputType = GetInputType(InPointerEvent);
+	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
 	{
-		RefreshActiveInputType(GetInputType(InPointerEvent));
+		RefreshActiveInputType(InputType);
 	}
 
 	return FCommonAnalogCursor::HandleMouseMoveEvent(SlateApp, InPointerEvent);
@@ -138,9 +141,10 @@ bool FCommonExtensionAnalogCursor::HandleMouseMoveEvent(FSlateApplication& Slate
 
 bool FCommonExtensionAnalogCursor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
-	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	ECommonExInputType InputType = GetInputType(InPointerEvent);
+	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
 	{
-		RefreshActiveInputType(GetInputType(InPointerEvent));
+		RefreshActiveInputType(InputType);
 	}
 
 	return FCommonAnalogCursor::HandleMouseButtonDownEvent(SlateApp, InPointerEvent);
@@ -148,9 +152,10 @@ bool FCommonExtensionAnalogCursor::HandleMouseButtonDownEvent(FSlateApplication&
 
 bool FCommonExtensionAnalogCursor::HandleMouseButtonDoubleClickEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
-	if (FAnalogCursor::IsRelevantInput(InPointerEvent))
+	ECommonExInputType InputType = GetInputType(InPointerEvent);
+	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
 	{
-		RefreshActiveInputType(GetInputType(InPointerEvent));
+		RefreshActiveInputType(InputType);
 	}
 
 	return FCommonAnalogCursor::HandleMouseButtonDoubleClickEvent(SlateApp, InPointerEvent);
@@ -170,6 +175,32 @@ bool FCommonExtensionAnalogCursor::ShouldVirtualAcceptSimulateMouseButton(const 
 	return false;
 }
 
+void FCommonExtensionAnalogCursor::RefreshCursorVisibility()
+{
+	bool bShowCursor = false;
+
+	if (bIsAnalogMovementEnabled || ActionRouter.ShouldAlwaysShowCursor())
+	{
+		bShowCursor = true;
+	}
+	if (MyExtensionActionRouter.IsValid() && MyExtensionActionRouter->GetActiveInputType() == ECommonExInputType::Mouse)
+	{
+		bShowCursor = true;
+	}
+
+	FSlateApplication& SlateApp = FSlateApplication::Get();
+	TSharedPtr<FSlateUser> SlateUser = SlateApp.GetUser(GetOwnerUserIndex());
+	if (SlateUser.IsValid())
+	{
+		if (SlateUser == SlateApp.GetCursorUser() && !bShowCursor)
+		{
+			SlateApp.SetPlatformCursorVisibility(false);
+		}
+
+		SlateUser->SetCursorVisibility(bShowCursor);
+	}
+}
+
 bool FCommonExtensionAnalogCursor::IsViewportWindowInFocusPath(const UCommonUIActionRouterBase& InActionRouter)
 {
 	// HACK:Common UI未開放這個函式，只能自己複製內容來用
@@ -183,6 +214,27 @@ bool FCommonExtensionAnalogCursor::IsViewportWindowInFocusPath(const UCommonUIAc
 		}
 	}
 	return true;
+}
+
+bool FCommonExtensionAnalogCursor::IsRelevantInputForType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const ECommonExInputType& DesiredInputType)
+{
+	// 參考FCommonInputPreprocessor::IsRelevantInput，排除Editor一些狀況
+
+#if WITH_EDITOR
+	if (GIntraFrameDebuggingGameThread)
+	{
+		return false;
+	}
+#endif
+
+	if (SlateApp.IsActive() || 
+		SlateApp.GetHandleDeviceInputWhenApplicationNotActive() || 
+		(ICommonInputModule::GetSettings().GetAllowOutOfFocusDeviceInput() && DesiredInputType == ECommonExInputType::Gamepad))
+	{
+		return FAnalogCursor::IsRelevantInput(InputEvent);
+	}
+
+	return false;
 }
 
 ECommonExInputType FCommonExtensionAnalogCursor::GetInputType(const ECommonInputType& InInputType) const

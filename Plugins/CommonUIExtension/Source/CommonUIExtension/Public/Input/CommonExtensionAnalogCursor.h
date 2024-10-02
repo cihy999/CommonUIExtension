@@ -37,7 +37,14 @@ public:
 	// ~End FCommonAnalogCursor Interface
 
 protected:
+	// ~Begin FCommonAnalogCursor Interface
+	virtual void RefreshCursorVisibility() override;
+	// ~End FCommonAnalogCursor Interface
+
+protected:
 	bool IsViewportWindowInFocusPath(const UCommonUIActionRouterBase& ActionRouter);
+
+	bool IsRelevantInputForType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const ECommonExInputType& DesiredInputType);
 
 	ECommonExInputType GetInputType(const ECommonInputType& InInputType) const;
 	ECommonExInputType GetInputType(const FKeyEvent& InKeyEvent) const;
