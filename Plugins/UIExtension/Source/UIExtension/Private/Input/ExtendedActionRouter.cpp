@@ -7,6 +7,7 @@
 // UIExtension
 #include "Input/ExtendedAnalogCursor.h"
 #include "UIExtensionLogs.h"
+#include "UIExtensionInputSettings.h"
 
 UExtendedActionRouter* UExtendedActionRouter::Get(const UWidget& ContextWidget)
 {
@@ -35,18 +36,21 @@ void UExtendedActionRouter::SetActiveInputType(EExtendedInputType NewType)
     {
         ActiveInputType = NewType;
 
-        bool bEnableModify = true;
-
-#if WITH_EDITOR
-        // PIE模式下都維持原始狀態，避免影響到滑鼠使用
-        if (UWorld* World = GetWorld())
+        bool bEnableModify = false;
+        const UUIExtensionInputSettings* InputSettings = GetDefault<UUIExtensionInputSettings>();
+        if (InputSettings->bHideCursorWhenUsingKeyboard)
         {
-            if (World->WorldType != EWorldType::Game)
+#if WITH_EDITOR
+            // PIE模式下都維持原始狀態，避免影響到滑鼠使用
+            if (UWorld* World = GetWorld())
             {
-                bEnableModify = false;
+                if (World->WorldType == EWorldType::Game)
+                {
+                    bEnableModify = true;
+                }
             }
-        }
 #endif
+        }
 
         if (bEnableModify)
         {

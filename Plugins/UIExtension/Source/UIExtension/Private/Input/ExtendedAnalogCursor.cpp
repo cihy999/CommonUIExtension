@@ -12,6 +12,7 @@
 // UIExtension
 #include "Input/ExtendedActionRouter.h"
 #include "UIExtensionDefine.h"
+#include "UIExtensionInputSettings.h"
 
 FExtendedAnalogCursor::FExtendedAnalogCursor(const UCommonUIActionRouterBase& InActionRouter)
 	: FCommonAnalogCursor(InActionRouter)
@@ -180,7 +181,9 @@ void FExtendedAnalogCursor::RefreshCursorVisibility()
 	bool bUseDefaultInputType = false;
 	bool bShowCursorByInputType = false;
 
-	if (ExtendedActionRouter.IsValid())
+	const UUIExtensionInputSettings* InputSettings = GetDefault<UUIExtensionInputSettings>();
+
+	if (InputSettings->bHideCursorWhenUsingKeyboard && ExtendedActionRouter.IsValid())
 	{
 #if WITH_EDITOR
 
