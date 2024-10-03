@@ -37,12 +37,22 @@ void SExtendedButton::Construct(const FArguments& InArgs)
 
 FReply SExtendedButton::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
 {
+	if (!IsInteractable())
+	{
+		return FReply::Unhandled();
+	}
+
 	// 這裡不阻擋任何按鍵，無論是搖桿、鍵盤點擊都是依靠Focus
 	return SButton::OnKeyDown(MyGeometry, InKeyEvent);
 }
 
 FReply SExtendedButton::OnKeyUp(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
 {
+	if (!IsInteractable())
+	{
+		return FReply::Unhandled();
+	}
+
 	// 這裡不阻擋任何按鍵，無論是搖桿、鍵盤點擊都是依靠Focus
 	return SButton::OnKeyUp(MyGeometry, InKeyEvent);
 }
