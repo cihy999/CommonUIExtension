@@ -7,6 +7,7 @@
 // UIExtension
 #include "Input/ExtendedAnalogCursor.h"
 #include "UIExtensionLogs.h"
+#include "UIExtensionInputSettings.h"
 
 UExtendedActionRouter* UExtendedActionRouter::Get(const UWidget& ContextWidget)
 {
@@ -16,23 +17,6 @@ UExtendedActionRouter* UExtendedActionRouter::Get(const UWidget& ContextWidget)
 void UExtendedActionRouter::Deinitialize()
 {
     Super::Deinitialize();
-
-    if (FSlateApplication::IsInitialized())
-    {
-#if !WITH_EDITOR
-
-        // 如果是CursorUser的話，把UsePlatformCursorForCursorUser調回來
-        // 避免關閉時，游標不見...
-        FSlateApplication& SlateApplication = FSlateApplication::Get();
-        ULocalPlayer* LocalPlayer = GetLocalPlayerChecked();
-        bool bCursorUser = LocalPlayer && LocalPlayer->GetSlateUser() == SlateApplication.GetCursorUser();
-        if (bCursorUser && ActiveInputType == EExtendedInputType::Keyboard)
-        {
-            SlateApplication.UsePlatformCursorForCursorUser(true);
-        }
-
-#endif // WITH_EDITOR
-    }
 }
 
 EExtendedInputType UExtendedActionRouter::GetActiveInputType() const
@@ -52,18 +36,33 @@ void UExtendedActionRouter::SetActiveInputType(EExtendedInputType NewType)
     {
         ActiveInputType = NewType;
 
-#if !WITH_EDITOR
-
-        // 偵測到鍵盤，重新調整一次UsePlatformCursorForCursorUser
-        FSlateApplication& SlateApplication = FSlateApplication::Get();
-        ULocalPlayer* LocalPlayer = GetLocalPlayerChecked();
-        bool bCursorUser = LocalPlayer && LocalPlayer->GetSlateUser() == SlateApplication.GetCursorUser();
-        if (bCursorUser && ActiveInputType == EExtendedInputType::Keyboard)
+        bool bEnableModify = false;
+        const UUIExtensionInputSettings* InputSettings = GetDefault<UUIExtensionInputSettings>();
+        if (InputSettings->bHideCursorWhenUsingKeyboard)
         {
-            SlateApplication.UsePlatformCursorForCursorUser(false);
+#if WITH_EDITOR
+            // PIE模式下都維持原始狀態，避免影響到滑鼠使用
+            if (UWorld* World = GetWorld())
+            {
+                if (World->WorldType == EWorldType::Game)
+                {
+                    bEnableModify = true;
+                }
+            }
+#endif
         }
 
-#endif // WITH_EDITOR
+        if (bEnableModify)
+        {
+            // 偵測到鍵盤，重新調整一次UsePlatformCursorForCursorUser
+            FSlateApplication& SlateApplication = FSlateApplication::Get();
+            ULocalPlayer* LocalPlayer = GetLocalPlayerChecked();
+            bool bCursorUser = LocalPlayer && LocalPlayer->GetSlateUser() == SlateApplication.GetCursorUser();
+            if (bCursorUser && ActiveInputType == EExtendedInputType::Keyboard)
+            {
+                SlateApplication.UsePlatformCursorForCursorUser(false);
+            }
+        }
 
         BroadcastInputTypeChanged();
     }

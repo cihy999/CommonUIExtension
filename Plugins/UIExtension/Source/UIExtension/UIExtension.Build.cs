@@ -34,7 +34,8 @@ public class UIExtension : ModuleRules
 				"GameplayTags",
                 "CommonInput",
 				"CommonUI",
-			}
+                "DeveloperSettings",
+            }
 			);
 			
 		
