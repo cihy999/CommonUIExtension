@@ -177,25 +177,52 @@ bool FExtendedAnalogCursor::ShouldVirtualAcceptSimulateMouseButton(const FKeyEve
 
 void FExtendedAnalogCursor::RefreshCursorVisibility()
 {
-	bool bShowCursor = false;
+	bool bUseDefaultInputType = false;
+	bool bShowCursorByInputType = false;
 
-	if (bIsAnalogMovementEnabled || ActionRouter.ShouldAlwaysShowCursor())
+	if (ExtendedActionRouter.IsValid())
 	{
-		bShowCursor = true;
-	}
-
 #if WITH_EDITOR
-	// 避免Editor模式下，影響到鍵盤使用，都用原始的控制
-	if (ActiveInputMethod == ECommonInputType::MouseAndKeyboard)
-	{
-		bShowCursor = true;
-	}
+
+		// 避免影響到Editor滑鼠使用，只有Standlone才關閉游標
+		bool bGameWorldDetected = false;
+		if (UWorld* World = ExtendedActionRouter->GetWorld())
+		{
+			if (World->WorldType == EWorldType::Game)
+			{
+				bGameWorldDetected = true;
+			}
+		}
+
+		if (bGameWorldDetected)
+		{
+			bShowCursorByInputType = ExtendedActionRouter->GetActiveInputType() == EExtendedInputType::Mouse;
+		}
+		else
+		{
+			bUseDefaultInputType = true;
+		}
+
 #else
-	if (ExtendedActionRouter.IsValid() && ExtendedActionRouter->GetActiveInputType() == EExtendedInputType::Mouse)
-	{
-		bShowCursor = true;
-	}
+
+		if (ExtendedActionRouter->GetActiveInputType() == EExtendedInputType::Mouse)
+		{
+			bShowCursor = true;
+		}
+
 #endif
+	}
+	else
+	{
+		bUseDefaultInputType = true;
+	}
+
+	if (bUseDefaultInputType)
+	{
+		bShowCursorByInputType = ActiveInputMethod == ECommonInputType::MouseAndKeyboard;
+	}
+
+	bool bShowCursor = bIsAnalogMovementEnabled || ActionRouter.ShouldAlwaysShowCursor() || bShowCursorByInputType;
 
 	FSlateApplication& SlateApp = FSlateApplication::Get();
 	TSharedPtr<FSlateUser> SlateUser = SlateApp.GetUser(GetOwnerUserIndex());
