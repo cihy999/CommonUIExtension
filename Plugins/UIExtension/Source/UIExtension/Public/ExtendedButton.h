@@ -60,6 +60,9 @@ protected:
 	// 根據InputType決定是否啟用HoverOnFocus
 	void UpdateHoverOnFocus(EExtendedInputType NewInputType);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "ExtendedButton", meta = (DisplayName = "On Extended Input Changed"))
+	void BP_OnExtendedInputChanged(EExtendedInputType NewInputType);
+
 // Focus ============================================================================================================
 protected:
 	UFUNCTION(BlueprintCallable)

@@ -110,6 +110,7 @@ void UExtendedButton::UnbindInputMethodChangedDelegate()
 void UExtendedButton::HandleExtendedInputChanged(EExtendedInputType NewInputType)
 {
 	UpdateHoverOnFocus(NewInputType);
+	BP_OnExtendedInputChanged(NewInputType);
 }
 
 void UExtendedButton::UpdateHoverOnFocus(EExtendedInputType NewInputType)
