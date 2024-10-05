@@ -24,11 +24,3 @@ Common UI本身不支援鍵盤操作，網路的解決方案：
     - `!bIsHoveredNow`→ `OnMouseLeave`
 
 筆記：[Common UI - 支援Keyboard](https://hackmd.io/@Ejvlpuy-SD2K0IjO3REe0g/S1rgYVA0C)
-
-## AnalogCursor
-
-處理游標視覺隱藏，主要覆寫`RefreshCursorVisibility`來處理。
-
-## 問題紀錄4：不要在Editor下關閉游標顯示
-
-不建議在Editor模式下，啟動"使用鍵盤時隱藏游標"，因為會影響到編輯工作。
