@@ -44,7 +44,7 @@ protected:
 protected:
 	bool IsViewportWindowInFocusPath(const UCommonUIActionRouterBase& ActionRouter);
 
-	bool IsRelevantInputForType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const EExtendedInputType& DesiredInputType);
+	bool IsRelevantForInputType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const EExtendedInputType& DesiredInputType);
 
 	EExtendedInputType GetInputType(const ECommonInputType& InInputType) const;
 	EExtendedInputType GetInputType(const FKeyEvent& InKeyEvent) const;

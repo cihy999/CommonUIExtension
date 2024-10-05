@@ -121,7 +121,7 @@ void FExtendedAnalogCursor::Tick(const float DeltaTime, FSlateApplication& Slate
 bool FExtendedAnalogCursor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
 {
 	EExtendedInputType InputType = GetInputType(InKeyEvent);
-	if (IsRelevantInputForType(SlateApp, InKeyEvent, InputType))
+	if (IsRelevantForInputType(SlateApp, InKeyEvent, InputType))
 	{
 		RefreshActiveInputType(InputType);
 	}
@@ -132,7 +132,7 @@ bool FExtendedAnalogCursor::HandleKeyDownEvent(FSlateApplication& SlateApp, cons
 bool FExtendedAnalogCursor::HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
 	EExtendedInputType InputType = GetInputType(InPointerEvent);
-	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
+	if (IsRelevantForInputType(SlateApp, InPointerEvent, InputType))
 	{
 		RefreshActiveInputType(InputType);
 	}
@@ -143,7 +143,7 @@ bool FExtendedAnalogCursor::HandleMouseMoveEvent(FSlateApplication& SlateApp, co
 bool FExtendedAnalogCursor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
 	EExtendedInputType InputType = GetInputType(InPointerEvent);
-	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
+	if (IsRelevantForInputType(SlateApp, InPointerEvent, InputType))
 	{
 		RefreshActiveInputType(InputType);
 	}
@@ -154,7 +154,7 @@ bool FExtendedAnalogCursor::HandleMouseButtonDownEvent(FSlateApplication& SlateA
 bool FExtendedAnalogCursor::HandleMouseButtonDoubleClickEvent(FSlateApplication& SlateApp, const FPointerEvent& InPointerEvent)
 {
 	EExtendedInputType InputType = GetInputType(InPointerEvent);
-	if (IsRelevantInputForType(SlateApp, InPointerEvent, InputType))
+	if (IsRelevantForInputType(SlateApp, InPointerEvent, InputType))
 	{
 		RefreshActiveInputType(InputType);
 	}
@@ -255,7 +255,7 @@ bool FExtendedAnalogCursor::IsViewportWindowInFocusPath(const UCommonUIActionRou
 	return true;
 }
 
-bool FExtendedAnalogCursor::IsRelevantInputForType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const EExtendedInputType& DesiredInputType)
+bool FExtendedAnalogCursor::IsRelevantForInputType(FSlateApplication& SlateApp, const FInputEvent& InputEvent, const EExtendedInputType& DesiredInputType)
 {
 	// 參考FCommonInputPreprocessor::IsRelevantInput，排除Editor一些狀況
 
